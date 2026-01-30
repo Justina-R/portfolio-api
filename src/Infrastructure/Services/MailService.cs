@@ -1,5 +1,4 @@
 using Domain.Interfaces;
-using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Net.Mail;
 
@@ -13,40 +12,30 @@ namespace Infrastructure.Services
         private readonly string _smtpUser;
         private readonly string _smtpPass;
 
-
-        public MailService(IConfiguration configuration)
+        public MailService()
         {
-            _mailFrom = configuration["mailSettings:mailFromAddress"];
-            _smtpHost = configuration["mailSettings:host"];
-            _smtpPort = int.Parse(configuration["mailSettings:port"] ?? "587");
-            _smtpUser = configuration["mailSettings:username"];
-            _smtpPass = configuration["mailSettings:password"];
+            _mailFrom = Environment.GetEnvironmentVariable("SMTP_USER")!;
+            _smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST")!;
+            _smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
+            _smtpUser = Environment.GetEnvironmentVariable("SMTP_USER")!;
+            _smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS")!;
         }
 
         public async Task SendFirstContact(string name, string email, string message)
         {
-            string subject = $"Contacto desde tu Portfolio de {name}";
-            string body = $"{name} quiere contactarse contigo desde tu Portfolio.\n" +
-                        $"Fecha: {DateTime.Now}\n" +
-                        $"Email: {email}\n" +
-                        $"Mensaje: {message}";
+            var subject = $"Contacto desde tu Portfolio de {name}";
+            var body = $"{name} quiere contactarse contigo.\n\nEmail: {email}\nMensaje: {message}";
 
-            try
+            using var client = new SmtpClient(_smtpHost, _smtpPort)
             {
-                using var client = new SmtpClient(_smtpHost, _smtpPort)
-                {
-                    Credentials = new NetworkCredential(_smtpUser, _smtpPass),
-                    EnableSsl = true
-                };
+                Credentials = new NetworkCredential(_smtpUser, _smtpPass),
+                EnableSsl = true,
+                Timeout = 10000
+            };
 
-                var mail = new MailMessage(_mailFrom, _mailFrom, subject, body);
-                client.Send(mail);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error enviando mail: {ex.Message}");
-                throw;
-            }
+            var mail = new MailMessage(_mailFrom, _mailFrom, subject, body);
+
+            await client.SendMailAsync(mail);
         }
     }
 }
