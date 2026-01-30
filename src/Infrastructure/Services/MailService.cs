@@ -1,41 +1,41 @@
 using Domain.Interfaces;
-using System.Net;
-using System.Net.Mail;
+using Resend;
 
 namespace Infrastructure.Services
 {
     public class MailService : IMailService
     {
+        private readonly IResend _resend;
         private readonly string _mailFrom;
-        private readonly string _smtpHost;
-        private readonly int _smtpPort;
-        private readonly string _smtpUser;
-        private readonly string _smtpPass;
+        private readonly string _mailTo;
 
-        public MailService()
+        public MailService(IResend resend)
         {
-            _mailFrom = Environment.GetEnvironmentVariable("SMTP_USER")!;
-            _smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST")!;
-            _smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
-            _smtpUser = Environment.GetEnvironmentVariable("SMTP_USER")!;
-            _smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS")!;
+            _resend = resend;
+            _mailFrom = Environment.GetEnvironmentVariable( "MAIL_FROM" )!;
+            _mailTo = Environment.GetEnvironmentVariable( "MAIL_TO" )!;
         }
 
         public async Task SendFirstContact(string name, string email, string message)
         {
             var subject = $"Contacto desde tu Portfolio de {name}";
-            var body = $"{name} quiere contactarse contigo.\n\nEmail: {email}\nMensaje: {message}";
 
-            using var client = new SmtpClient(_smtpHost, _smtpPort)
+            var htmlBody = $@"
+                        <strong>Nuevo contacto desde tu portfolio</strong><br/><br/>
+                        <b>Nombre:</b> {name}<br/>
+                        <b>Email:</b> {email}<br/><br/>
+                        <b>Mensaje:</b><br/>{message}";
+
+            var mail = new EmailMessage
             {
-                Credentials = new NetworkCredential(_smtpUser, _smtpPass),
-                EnableSsl = true,
-                Timeout = 10000
+                From = _mailFrom,
+                Subject = subject,
+                HtmlBody = htmlBody
             };
 
-            var mail = new MailMessage(_mailFrom, _mailFrom, subject, body);
+            mail.To.Add(_mailTo);
 
-            await client.SendMailAsync(mail);
+            await _resend.EmailSendAsync(mail);
         }
     }
 }
