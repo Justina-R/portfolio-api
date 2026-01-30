@@ -20,8 +20,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-
-
 app.UseCors("AllowAll");
 
 if (app.Environment.IsDevelopment())
@@ -34,10 +32,5 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
-
-var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
-
-app.Urls.Clear();
-app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
