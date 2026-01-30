@@ -8,7 +8,5 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/out .
 
-ENV ASPNETCORE_URLS=http://0.0.0.0:${PORT}
-EXPOSE ${PORT}
-
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "Web.dll"]
