@@ -11,6 +11,13 @@ public class ApiKeyMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Allow preflight CORS
+        if (context.Request.Method == HttpMethods.Options)
+        {
+            await _next(context);
+            return;
+        }
+
         if (!context.Request.Headers.TryGetValue("SECRET-API-KEY", out var extractedKey))
         {
             context.Response.StatusCode = 401;
