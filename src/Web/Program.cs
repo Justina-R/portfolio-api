@@ -45,9 +45,9 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-app.UseMiddleware<ApiKeyMiddleware>();
-
 app.UseCors("AllowAll");
+
+app.UseMiddleware<ApiKeyMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
